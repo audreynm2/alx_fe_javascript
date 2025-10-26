@@ -1,4 +1,7 @@
-// Load quotes from localStorage if available
+// Base URL for mock server (JSONPlaceholder)
+const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // Simulated API
+
+// Load quotes from localStorage
 let quotes = JSON.parse(localStorage.getItem('quotes')) || [
   { text: "Life is what happens when you're busy making other plans.", category: "Life" },
   { text: "Be yourself; everyone else is already taken.", category: "Motivation" },
@@ -19,7 +22,7 @@ function showRandomQuote() {
   const quote = filteredQuotes[randomIndex];
   document.getElementById('quoteDisplay').innerHTML = `${quote.text} — ${quote.category}`;
 
-  // Save last viewed quote to sessionStorage
+  // Save last viewed quote in sessionStorage
   sessionStorage.setItem('lastQuote', JSON.stringify(quote));
 }
 
@@ -80,7 +83,6 @@ function populateCategories() {
     document.body.insertBefore(categorySelect, document.getElementById('quoteDisplay'));
   }
 
-  // Clear existing options
   categorySelect.innerHTML = '';
 
   const allOption = document.createElement('option');
@@ -132,40 +134,40 @@ function importFromJsonFile(event) {
   fileReader.readAsText(event.target.files[0]);
 }
 
-// Event listener for Show New Quote
-document.getElementById('newQuote').addEventListener('click', showRandomQuote);
+// -------------------- SERVER SYNC & CONFLICT RESOLUTION --------------------
 
-// Initialize
-createAddQuoteForm();
-populateCategories();
-showRandomQuote();
+// Fetch quotes from server and merge with local storage
+async function fetchServerQuotes() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const serverData = await response.json();
 
-function exportQuotes() {
-  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'quotes.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
+    // Simulated server format: [{id, title, body, userId}]
+    const serverQuotes = serverData.map(item => ({
+      text: item.title,
+      category: item.body || 'General'
+    }));
 
-// JSON Import
-function importFromJsonFile(event) {
-  const fileReader = new FileReader();
-  fileReader.onload = function(e) {
-    const importedQuotes = JSON.parse(e.target.result);
-    quotes.push(...importedQuotes);
+    // Conflict resolution: server takes precedence
+    quotes = serverQuotes;
     saveQuotes();
     showRandomQuote();
-    alert('Quotes imported successfully!');
-  };
-  fileReader.readAsText(event.target.files[0]);
+
+    // Notify user of update
+    alert('Quotes have been synced with the server.');
+  } catch (error) {
+    console.error('Failed to fetch server data:', error);
+  }
 }
 
-// Event listeners
-document.getElementById('newQuote').addEventListener('click', showRandomQuote);
+// Periodically sync every 30 seconds
+setInterval(fetchServerQuotes, 30000);
 
-// Initialize
-showRandomQuote();
+// -------------------- EVENT LISTENERS --------------------
+document.getElementById('newQuote').addEventListener('click', showRandomQuote);
+document.getElementById('importFile').addEventListener('change', importFromJsonFile);
+document.getElementById('exportBtn').addEventListener('click', exportQuotes);
+
+// -------------------- INITIALIZE --------------------
 createAddQuoteForm();
+populateCategories(
