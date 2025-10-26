@@ -23,14 +23,14 @@ async function syncQuotes() {
     // Conflict resolution: server data takes precedence
     quotes = serverQuotes;
 
-    // Directly update localStorage (ALX requirement)
+    // Update localStorage directly
     localStorage.setItem('quotes', JSON.stringify(quotes));
 
     // Update DOM
     showRandomQuote();
 
-    // Notify user
-    displaySyncNotification('Quotes have been updated from the server.');
+    // ALX-required notification text
+    displaySyncNotification('Quotes synced with server!');
   }
 }
 
@@ -81,19 +81,3 @@ function addQuote() {
   if (!text || !category) return alert('Both fields are required');
 
   const newQuote = { text, category };
-  quotes.push(newQuote);
-
-  // Save directly to localStorage
-  localStorage.setItem('quotes', JSON.stringify(quotes));
-
-  showRandomQuote();
-
-  // Post new quote to server
-  postQuoteToServer(newQuote);
-
-  document.getElementById('newQuoteText').value = '';
-  document.getElementById('newQuoteCategory').value = '';
-}
-
-// -------------------- PERIODIC SYNC (setInterval) --------------------
-setInterval(syncQuotes, 30000); // every 30 seconds
