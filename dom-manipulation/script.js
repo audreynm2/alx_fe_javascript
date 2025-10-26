@@ -5,7 +5,6 @@ async function fetchQuotesFromServer() {
   try {
     const response = await fetch(SERVER_URL);
     const serverData = await response.json();
-    // Simulated server format
     return serverData.map(item => ({
       text: item.title,
       category: item.body || 'General'
@@ -20,8 +19,8 @@ async function fetchQuotesFromServer() {
 async function syncQuotes() {
   const serverQuotes = await fetchQuotesFromServer();
 
-  // Conflict resolution: server data takes precedence
   if (serverQuotes.length > 0) {
+    // Conflict resolution: server data takes precedence
     quotes = serverQuotes;
 
     // Directly update localStorage (ALX requirement)
@@ -30,7 +29,7 @@ async function syncQuotes() {
     // Update DOM
     showRandomQuote();
 
-    // UI notification
+    // Notify user
     displaySyncNotification('Quotes have been updated from the server.');
   }
 }
@@ -74,7 +73,27 @@ function displaySyncNotification(message) {
   setTimeout(() => notification.remove(), 4000);
 }
 
-// -------------------- MODIFY addQuote TO POST TO SERVER --------------------
+// -------------------- ADD QUOTE FUNCTION --------------------
 function addQuote() {
   const text = document.getElementById('newQuoteText').value.trim();
-  const category = document.getElementById('newQuoteCategory').value.tri
+  const category = document.getElementById('newQuoteCategory').value.trim();
+
+  if (!text || !category) return alert('Both fields are required');
+
+  const newQuote = { text, category };
+  quotes.push(newQuote);
+
+  // Save directly to localStorage
+  localStorage.setItem('quotes', JSON.stringify(quotes));
+
+  showRandomQuote();
+
+  // Post new quote to server
+  postQuoteToServer(newQuote);
+
+  document.getElementById('newQuoteText').value = '';
+  document.getElementById('newQuoteCategory').value = '';
+}
+
+// -------------------- PERIODIC SYNC (setInterval) --------------------
+setInterval(syncQuotes, 30000); // every 30 seconds
