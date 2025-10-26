@@ -1,12 +1,30 @@
+const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // Mock API
+
+// -------------------- FETCH QUOTES FROM SERVER --------------------
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const serverData = await response.json();
+    // Simulated server format
+    return serverData.map(item => ({
+      text: item.title,
+      category: item.body || 'General'
+    }));
+  } catch (error) {
+    console.error('Error fetching server quotes:', error);
+    return [];
+  }
+}
+
 // -------------------- SYNC LOCAL QUOTES WITH SERVER --------------------
 async function syncQuotes() {
   const serverQuotes = await fetchQuotesFromServer();
 
+  // Conflict resolution: server data takes precedence
   if (serverQuotes.length > 0) {
-    // Conflict resolution: server data takes precedence
     quotes = serverQuotes;
 
-    // Update localStorage directly (required for ALX checker)
+    // Directly update localStorage (ALX requirement)
     localStorage.setItem('quotes', JSON.stringify(quotes));
 
     // Update DOM
@@ -14,6 +32,24 @@ async function syncQuotes() {
 
     // UI notification
     displaySyncNotification('Quotes have been updated from the server.');
+  }
+}
+
+// -------------------- POST NEW QUOTE TO SERVER --------------------
+async function postQuoteToServer(quote) {
+  try {
+    await fetch(SERVER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: quote.text,
+        body: quote.category,
+        userId: 1
+      })
+    });
+    console.log('Quote posted to server:', quote);
+  } catch (error) {
+    console.error('Failed to post quote to server:', error);
   }
 }
 
@@ -37,3 +73,8 @@ function displaySyncNotification(message) {
   notification.textContent = message;
   setTimeout(() => notification.remove(), 4000);
 }
+
+// -------------------- MODIFY addQuote TO POST TO SERVER --------------------
+function addQuote() {
+  const text = document.getElementById('newQuoteText').value.trim();
+  const category = document.getElementById('newQuoteCategory').value.tri
